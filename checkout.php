@@ -48,40 +48,34 @@ foreach ($_SESSION['cart'] as $product_id => $item) {
 // Proses checkout jika ada pengiriman POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'place_order') {
     $shipping_address = trim($_POST['shipping_address']);
-    $payment_method = trim($_POST['payment_method']);
-    $phone_number = trim($_POST['phone']); // Mengambil nomor telepon dari form
+    $payment_method = trim($_POST['payment_method']); // Ini akan berisi "Transfer Bank - BCA" atau "COD"
+    $phone_number = trim($_POST['phone']); 
 
     if (empty($shipping_address) || empty($payment_method) || empty($phone_number)) {
         $message = 'Alamat pengiriman, nomor telepon, dan metode pembayaran harus diisi.';
         $message_type = 'error';
     } else {
         try {
-            $pdo->beginTransaction(); // Mulai transaksi database
+            $pdo->beginTransaction(); 
 
-            // 1. Buat pesanan baru di tabel `orders`
-            // Saat ini tabel orders tidak memiliki kolom phone_number.
-            // Anda bisa tambahkan kolom ini di phpMyAdmin jika diperlukan.
             $stmt_order = $pdo->prepare("
                 INSERT INTO orders (user_id, total_amount, shipping_address, payment_method, status, payment_status)
                 VALUES (?, ?, ?, ?, 'pending', 'unpaid')
             ");
             $stmt_order->execute([$user_id, $subtotal, $shipping_address, $payment_method]);
-            $order_id = $pdo->lastInsertId(); // Dapatkan ID pesanan yang baru dibuat
+            $order_id = $pdo->lastInsertId(); 
 
-            // 2. Tambahkan item-item dari keranjang ke `order_items` dan kurangi stok produk
             foreach ($_SESSION['cart'] as $product_id => $item) {
-                // Pastikan stok tersedia (validasi ganda di sisi server)
-                $stmt_stock = $pdo->prepare("SELECT stock FROM products WHERE id = ? FOR UPDATE"); // Lock row
+                $stmt_stock = $pdo->prepare("SELECT stock FROM products WHERE id = ? FOR UPDATE"); 
                 $stmt_stock->execute([$product_id]);
                 $current_stock = $stmt_stock->fetchColumn();
 
                 if ($current_stock < $item['quantity']) {
-                    $pdo->rollBack(); // Batalkan transaksi
+                    $pdo->rollBack(); 
                     $message = 'Stok tidak mencukupi untuk produk: ' . htmlspecialchars($item['name']) . '. Sisa stok: ' . $current_stock;
                     $message_type = 'error';
-                    // Kosongkan keranjang untuk produk yang bermasalah atau keseluruhan
-                    unset($_SESSION['cart'][$product_id]); // Hapus produk bermasalah dari keranjang
-                    header('Location: cart.php?error=stock_issue'); // Redirect kembali ke keranjang
+                    unset($_SESSION['cart'][$product_id]); 
+                    header('Location: cart.php?error=stock_issue'); 
                     exit();
                 }
 
@@ -91,14 +85,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 ");
                 $stmt_item->execute([$order_id, $product_id, $item['quantity'], $item['price']]);
 
-                // Kurangi stok produk
                 $stmt_update_stock = $pdo->prepare("UPDATE products SET stock = stock - ?, updated_at = NOW() WHERE id = ?");
                 $stmt_update_stock->execute([$item['quantity'], $product_id]);
             }
 
-            $pdo->commit(); // Commit transaksi
+            $pdo->commit(); 
             
-            // Hapus keranjang setelah pesanan berhasil
             unset($_SESSION['cart']);
 
             $message = 'Pesanan Anda berhasil dibuat! Nomor Pesanan: #' . $order_id . '.';
@@ -108,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             exit();
 
         } catch (PDOException $e) {
-            $pdo->rollBack(); // Rollback jika ada kesalahan
+            $pdo->rollBack(); 
             $message = 'Terjadi kesalahan saat memproses pesanan: ' . $e->getMessage();
             $message_type = 'error';
         }
@@ -116,7 +108,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 
-// Sertakan header tampilan (ini sudah berisi <html>, <head>, dan <body> pembuka)
 include __DIR__ . '/includes/header.php';
 ?>
 
@@ -143,18 +134,29 @@ include __DIR__ . '/includes/header.php';
                     <div class="form-group">
                         <label for="phone">Nomor Telepon:</label>
                         <input type="text" id="phone" name="phone" value="<?php echo htmlspecialchars($user_info['phone'] ?? ''); ?>" required>
-                        </div>
+                    </div>
 
                     <div class="form-group">
                         <label>Metode Pembayaran:</label>
                         <div class="payment-methods">
                             <label>
-                                <input type="radio" name="payment_method" value="Transfer Bank" required checked> Transfer Bank
+                                <input type="radio" name="payment_method" value="COD" required checked> Cash On Delivery (COD)
                             </label>
                             <label>
-                                <input type="radio" name="payment_method" value="COD"> Cash On Delivery (COD)
+                                <input type="radio" name="payment_method" value="placeholder_bank_transfer"> Transfer Bank
                             </label>
+                            <div id="bank-options" style="margin-left: 20px; display: none;">
+                                <label>
+                                    <input type="radio" name="payment_method" value="Transfer Bank - BCA"> BCA
+                                </label>
+                                <label>
+                                    <input type="radio" name="payment_method" value="Transfer Bank - BRI"> BRI
+                                </label>
+                                <label>
+                                    <input type="radio" name="payment_method" value="Transfer Bank - BNI"> BNI
+                                </label>
                             </div>
+                        </div>
                     </div>
 
                     <button type="submit" class="button">Konfirmasi Pesanan</button>
@@ -188,3 +190,27 @@ include __DIR__ . '/includes/header.php';
 // Sertakan footer tampilan (ini akan berisi </body> dan </html> penutup)
 include __DIR__ . '/includes/footer.php';
 ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
+    const bankOptionsDiv = document.getElementById('bank-options');
+
+    function toggleBankOptions() {
+        const selectedValue = document.querySelector('input[name="payment_method"]:checked').value;
+        if (selectedValue === 'placeholder_bank_transfer' || selectedValue.startsWith('Transfer Bank -')) {
+            bankOptionsDiv.style.display = 'block';
+        } else {
+            bankOptionsDiv.style.display = 'none';
+        }
+    }
+
+    // Set initial state
+    toggleBankOptions();
+
+    // Add event listeners for changes
+    paymentMethods.forEach(radio => {
+        radio.addEventListener('change', toggleBankOptions);
+    });
+});
+</script>
