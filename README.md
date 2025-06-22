@@ -239,6 +239,8 @@ TOKO_THRIFTING_SUCI/
 ├── register.php               # Halaman pendaftaran akun baru
 └── reset_password.php         # Halaman untuk mengatur ulang password
 
+```
+
 ## 📄 Lisensi
 
 Proyek ini dirilis di bawah [Lisensi MIT](https://opensource.org/licenses/MIT). Anda bebas menggunakan, memodifikasi, dan mendistribusikannya.
