@@ -99,7 +99,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             header('Location: my_orders.php?order_id=' . $order_id . '&status=success');
             exit();
 
+<<<<<<< HEAD
         } catch (PDOException | Exception $e) { // Tangkap Exception juga jika ada di PHPMailer
+=======
+        } catch (PDOException $e) {
+>>>>>>> 80e41601e95216a9f3a88498772bc1c8787d7d61
             $pdo->rollBack(); 
             $message = 'Terjadi kesalahan saat memproses pesanan: ' . $e->getMessage();
             $message_type = 'error';
@@ -143,6 +147,7 @@ include __DIR__ . '/includes/header.php';
                                 <input type="radio" name="payment_method" value="COD" required checked> Cash On Delivery (COD)
                             </label>
                             <label>
+<<<<<<< HEAD
                                 <input type="radio" name="payment_method" value="placeholder_bank_transfer" id="radio-transfer-bank"> Transfer Bank
                             </label>
                             <div id="bank-options" style="margin-left: 20px;">
@@ -157,6 +162,19 @@ include __DIR__ . '/includes/header.php';
                                 <label>
                                     <input type="radio" name="payment_method" value="Transfer Bank - BNI">
                                     <img src="assets/images/payment_methods/bni.png" alt="Logo BNI"> BANK BNI
+=======
+                                <input type="radio" name="payment_method" value="placeholder_bank_transfer"> Transfer Bank
+                            </label>
+                            <div id="bank-options" style="margin-left: 20px; display: none;">
+                                <label>
+                                    <input type="radio" name="payment_method" value="Transfer Bank - BCA"> BCA
+                                </label>
+                                <label>
+                                    <input type="radio" name="payment_method" value="Transfer Bank - BRI"> BRI
+                                </label>
+                                <label>
+                                    <input type="radio" name="payment_method" value="Transfer Bank - BNI"> BNI
+>>>>>>> 80e41601e95216a9f3a88498772bc1c8787d7d61
                                 </label>
                             </div>
                         </div>
@@ -190,12 +208,17 @@ include __DIR__ . '/includes/header.php';
     </main>
 
 <?php
+<<<<<<< HEAD
+=======
+// Sertakan footer tampilan (ini akan berisi </body> dan </html> penutup)
+>>>>>>> 80e41601e95216a9f3a88498772bc1c8787d7d61
 include __DIR__ . '/includes/footer.php';
 ?>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
+<<<<<<< HEAD
     const radioTransferBank = document.getElementById('radio-transfer-bank');
     const bankOptionsDiv = document.getElementById('bank-options');
 
@@ -211,6 +234,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Pilih bank pertama secara default jika 'Transfer Bank' generik dipilih
                 bankOptionsDiv.querySelector('input[type="radio"]').checked = true;
             }
+=======
+    const bankOptionsDiv = document.getElementById('bank-options');
+
+    function toggleBankOptions() {
+        const selectedValue = document.querySelector('input[name="payment_method"]:checked').value;
+        if (selectedValue === 'placeholder_bank_transfer' || selectedValue.startsWith('Transfer Bank -')) {
+            bankOptionsDiv.style.display = 'block';
+>>>>>>> 80e41601e95216a9f3a88498772bc1c8787d7d61
         } else {
             bankOptionsDiv.style.display = 'none';
         }
@@ -224,4 +255,8 @@ document.addEventListener('DOMContentLoaded', function() {
         radio.addEventListener('change', toggleBankOptions);
     });
 });
+<<<<<<< HEAD
 </script>
+=======
+</script>
+>>>>>>> 80e41601e95216a9f3a88498772bc1c8787d7d61

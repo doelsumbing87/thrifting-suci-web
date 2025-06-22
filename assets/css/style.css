@@ -960,6 +960,7 @@ body.admin-body { /* Add this class to <body> tag in header.php for admin */
         margin-bottom: 10px;
     }
 }
+<<<<<<< HEAD
 
 /* ========================================= */
 /* 16. Payment Method Logos                */
@@ -976,3 +977,5 @@ body.admin-body { /* Add this class to <body> tag in header.php for admin */
 .payment-methods label input[type="radio"] {
     margin-top: -2px; /* Sesuaikan posisi vertikal radio button */
 }
+=======
+>>>>>>> 80e41601e95216a9f3a88498772bc1c8787d7d61
