@@ -1,8 +1,5 @@
 ![{9CF3C654-B746-4824-96EE-A982CAFCB797}](https://github.com/user-attachments/assets/74116037-d07d-4a05-bbf4-f92b3e017593)# TOKO THRIFTING SUCI - Sistem Informasi E-Commerce Baju Thrift Berbasis Web
 
-![Toko Thrifting Suci Banner](![{9CF3C654-B746-4824-96EE-A982CAFCB797}](https://github.com/user-attachments/assets/0ce4bb66-60bb-4606-b411-edaf41aef8ba)
-)
-
 Selamat datang di repositori proyek **TOKO THRIFTING SUCI**! Ini adalah sistem informasi e-commerce berbasis web yang dirancang khusus untuk jual beli baju thrift (bekas layak pakai) secara online. Proyek ini dibangun menggunakan teknologi web dasar agar mudah dipelajari dan dikembangkan.
 
 ## Daftar Isi
