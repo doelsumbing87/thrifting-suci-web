@@ -40,115 +40,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $quantity = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 1;
 
     if ($item_product_id === $product_id && $quantity > 0 && $product) {
-        // Logika menambahkan ke keranjang
-        // Keranjang akan disimpan di $_SESSION['cart']
-        if (!isset($_SESSION['cart'])) {
-            $_SESSION['cart'] = [];
-        }
-
-        // Periksa apakah produk sudah ada di keranjang
-        if (isset($_SESSION['cart'][$item_product_id])) {
-            $_SESSION['cart'][$item_product_id]['quantity'] += $quantity;
+        // Validasi stok sebelum menambahkan ke keranjang
+        if ($quantity > $product['stock']) {
+            $message = 'Stok tidak mencukupi. Hanya tersedia ' . htmlspecialchars($product['stock']) . ' unit.';
+            $message_type = 'error';
         } else {
-            // Tambahkan produk baru ke keranjang
-            $_SESSION['cart'][$item_product_id] = [
-                'name' => $product['name'],
-                'price' => $product['price'],
-                'image' => $product['image'],
-                'quantity' => $quantity
-            ];
-        }
+            // Logika menambahkan ke keranjang
+            if (!isset($_SESSION['cart'])) {
+                $_SESSION['cart'] = [];
+            }
 
-        $message = htmlspecialchars($product['name']) . ' telah ditambahkan ke keranjang.';
-        $message_type = 'success';
+            // Periksa apakah produk sudah ada di keranjang
+            if (isset($_SESSION['cart'][$item_product_id])) {
+                // Pastikan total kuantitas tidak melebihi stok
+                if (($_SESSION['cart'][$item_product_id]['quantity'] + $quantity) > $product['stock']) {
+                    $message = 'Tidak bisa menambahkan. Total kuantitas di keranjang akan melebihi stok yang tersedia (' . htmlspecialchars($product['stock']) . ').';
+                    $message_type = 'error';
+                } else {
+                    $_SESSION['cart'][$item_product_id]['quantity'] += $quantity;
+                    $message = htmlspecialchars($product['name']) . ' telah ditambahkan ke keranjang.';
+                    $message_type = 'success';
+                }
+            } else {
+                // Tambahkan produk baru ke keranjang
+                $_SESSION['cart'][$item_product_id] = [
+                    'name' => $product['name'],
+                    'price' => $product['price'],
+                    'image' => $product['image'],
+                    'quantity' => $quantity
+                ];
+                $message = htmlspecialchars($product['name']) . ' telah ditambahkan ke keranjang.';
+                $message_type = 'success';
+            }
+        }
     } else {
         $message = 'Gagal menambahkan produk ke keranjang. Kuantitas tidak valid atau produk tidak ditemukan.';
         $message_type = 'error';
     }
 }
 
-
+// Sertakan header tampilan (ini sudah berisi <html>, <head>, dan <body> pembuka)
 include __DIR__ . '/includes/header.php';
 ?>
-
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $product ? htmlspecialchars($product['name']) : 'Detail Produk'; ?> - TOKO THRIFTING SUCI</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-    <style>
-        /* CSS Tambahan untuk Product Detail */
-        .product-detail-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 30px;
-            margin-top: 30px;
-        }
-        .product-detail-image {
-            flex: 1;
-            min-width: 300px;
-            text-align: center;
-        }
-        .product-detail-image img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .product-detail-info {
-            flex: 2;
-            min-width: 400px;
-        }
-        .product-detail-info h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            color: #333;
-        }
-        .product-detail-info .category {
-            font-size: 1rem;
-            color: #666;
-            margin-bottom: 15px;
-            display: block;
-        }
-        .product-detail-info .price {
-            font-size: 2rem;
-            color: #007bff;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-        .product-detail-info .description {
-            margin-bottom: 20px;
-            line-height: 1.8;
-            color: #555;
-        }
-        .product-detail-info .stock {
-            font-size: 1rem;
-            color: #666;
-            margin-bottom: 20px;
-        }
-        .quantity-input {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .quantity-input label {
-            margin-right: 10px;
-            font-weight: bold;
-        }
-        .quantity-input input[type="number"] {
-            width: 80px;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            text-align: center;
-            font-size: 1rem;
-        }
-    </style>
-</head>
-<body>
-    <?php include __DIR__ . '/includes/header.php'; ?>
 
     <main class="container">
         <?php if ($message): ?>
@@ -191,6 +124,7 @@ include __DIR__ . '/includes/header.php';
         <?php endif; ?>
     </main>
 
-    <?php include __DIR__ . '/includes/footer.php'; ?>
-</body>
-</html>
+<?php
+// Sertakan footer tampilan (ini akan berisi </body> dan </html> penutup)
+include __DIR__ . '/includes/footer.php';
+?>
