@@ -51,97 +51,9 @@ try {
     $orders = [];
 }
 
+// Sertakan header tampilan (ini sudah berisi <html>, <head>, dan <body> pembuka)
 include __DIR__ . '/includes/header.php';
 ?>
-
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riwayat Pesanan - TOKO THRIFTING SUCI</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-    <style>
-        /* CSS Tambahan untuk My Orders */
-        .order-card {
-            background-color: #fff;
-            padding: 25px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border: 1px solid #e0e0e0;
-        }
-        .order-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px dashed #ddd;
-        }
-        .order-header h3 {
-            margin: 0;
-            font-size: 1.4rem;
-            color: #333;
-        }
-        .order-status {
-            font-weight: bold;
-            color: #007bff; /* Default */
-        }
-        .order-status.pending { color: #ffc107; }
-        .order-status.processing { color: #17a2b8; }
-        .order-status.shipped { color: #007bff; }
-        .order-status.delivered { color: #28a745; }
-        .order-status.cancelled { color: #dc3545; }
-
-        .order-item-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .order-item-list li {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px dotted #eee;
-        }
-        .order-item-list li:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        .order-item-list img {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 4px;
-            margin-right: 15px;
-        }
-        .order-item-details {
-            flex-grow: 1;
-        }
-        .order-item-details strong {
-            display: block;
-            font-size: 1.1rem;
-            color: #333;
-        }
-        .order-item-details span {
-            color: #666;
-            font-size: 0.9rem;
-        }
-        .order-total-amount {
-            text-align: right;
-            font-weight: bold;
-            font-size: 1.2rem;
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 1px solid #ddd;
-        }
-    </style>
-</head>
-<body>
-    <?php include __DIR__ . '/includes/header.php'; ?>
 
     <main class="container">
         <h1>Riwayat Pesanan Saya</h1>
@@ -168,17 +80,21 @@ include __DIR__ . '/includes/header.php';
 
                     <h4>Detail Item:</h4>
                     <ul class="order-item-list">
-                        <?php foreach ($order['items'] as $item): ?>
-                            <li>
-                                <img src="assets/images/products/<?php echo htmlspecialchars($item['product_image'] ?: 'product_placeholder.jpg'); ?>" alt="<?php echo htmlspecialchars($item['product_name']); ?>">
-                                <div class="order-item-details">
-                                    <strong><?php echo htmlspecialchars($item['product_name']); ?></strong>
-                                    <span>Kuantitas: <?php echo htmlspecialchars($item['quantity']); ?> x Rp <?php echo number_format($item['price'], 0, ',', '.'); ?></span>
-                                    <br>
-                                    <span>Subtotal: Rp <?php echo number_format($item['price'] * $item['quantity'], 0, ',', '.'); ?></span>
-                                </div>
-                            </li>
-                        <?php endforeach; ?>
+                        <?php if (!empty($order['items'])): ?>
+                            <?php foreach ($order['items'] as $item): ?>
+                                <li>
+                                    <img src="assets/images/products/<?php echo htmlspecialchars($item['product_image'] ?: 'product_placeholder.jpg'); ?>" alt="<?php echo htmlspecialchars($item['product_name']); ?>">
+                                    <div class="order-item-details">
+                                        <strong><?php echo htmlspecialchars($item['product_name']); ?></strong>
+                                        <span>Kuantitas: <?php echo htmlspecialchars($item['quantity']); ?> x Rp <?php echo number_format($item['price'], 0, ',', '.'); ?></span>
+                                        <br>
+                                        <span>Subtotal: Rp <?php echo number_format($item['price'] * $item['quantity'], 0, ',', '.'); ?></span>
+                                    </div>
+                                </li>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <li>Tidak ada item untuk pesanan ini.</li>
+                        <?php endif; ?>
                     </ul>
                     <div class="order-total-amount">
                         Total Pesanan: Rp <?php echo number_format($order['total_amount'], 0, ',', '.'); ?>
@@ -191,6 +107,7 @@ include __DIR__ . '/includes/header.php';
         <?php endif; ?>
     </main>
 
-    <?php include __DIR__ . '/includes/footer.php'; ?>
-</body>
-</html>
+<?php
+// Sertakan footer tampilan (ini akan berisi </body> dan </html> penutup)
+include __DIR__ . '/includes/footer.php';
+?>
