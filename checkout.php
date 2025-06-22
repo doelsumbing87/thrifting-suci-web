@@ -15,7 +15,7 @@ if (!isset($_SESSION['user_id'])) {
 
 // Redirect jika keranjang kosong
 if (empty($_SESSION['cart'])) {
-    header('Location: cart.php');
+    header('Location: cart.php?error=empty_cart_checkout');
     exit();
 }
 
@@ -29,7 +29,6 @@ try {
     $user_info = $stmt_user->fetch();
 
     if (!$user_info) {
-        // Ini seharusnya tidak terjadi jika user_id ada di sesi, tapi sebagai fallback
         session_destroy();
         header('Location: login.php?error=invalid_user');
         exit();
@@ -49,16 +48,19 @@ foreach ($_SESSION['cart'] as $product_id => $item) {
 // Proses checkout jika ada pengiriman POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'place_order') {
     $shipping_address = trim($_POST['shipping_address']);
-    $payment_method = trim($_POST['payment_method']); // Metode pembayaran sederhana
+    $payment_method = trim($_POST['payment_method']);
+    $phone_number = trim($_POST['phone']); // Mengambil nomor telepon dari form
 
-    if (empty($shipping_address) || empty($payment_method)) {
-        $message = 'Alamat pengiriman dan metode pembayaran harus diisi.';
+    if (empty($shipping_address) || empty($payment_method) || empty($phone_number)) {
+        $message = 'Alamat pengiriman, nomor telepon, dan metode pembayaran harus diisi.';
         $message_type = 'error';
     } else {
         try {
             $pdo->beginTransaction(); // Mulai transaksi database
 
             // 1. Buat pesanan baru di tabel `orders`
+            // Saat ini tabel orders tidak memiliki kolom phone_number.
+            // Anda bisa tambahkan kolom ini di phpMyAdmin jika diperlukan.
             $stmt_order = $pdo->prepare("
                 INSERT INTO orders (user_id, total_amount, shipping_address, payment_method, status, payment_status)
                 VALUES (?, ?, ?, ?, 'pending', 'unpaid')
@@ -114,80 +116,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 
+// Sertakan header tampilan (ini sudah berisi <html>, <head>, dan <body> pembuka)
 include __DIR__ . '/includes/header.php';
 ?>
-
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout - TOKO THRIFTING SUCI</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-    <style>
-        /* CSS Tambahan untuk Checkout */
-        .checkout-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 30px;
-            margin-top: 30px;
-        }
-        .checkout-form-section, .checkout-summary-section {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            flex: 1;
-            min-width: 400px; /* Lebar minimal untuk responsivitas */
-        }
-        .checkout-summary-section {
-            border-left: 1px solid #eee;
-            padding-left: 30px;
-        }
-        .checkout-summary-section h2, .checkout-form-section h2 {
-            margin-top: 0;
-            margin-bottom: 25px;
-            font-size: 1.8rem;
-            color: #333;
-        }
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            padding-bottom: 5px;
-            border-bottom: 1px dashed #eee;
-        }
-        .summary-item:last-of-type {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-        .summary-total {
-            font-size: 1.3rem;
-            font-weight: bold;
-            margin-top: 20px;
-            padding-top: 10px;
-            border-top: 2px solid #ddd;
-            display: flex;
-            justify-content: space-between;
-        }
-        .form-group label {
-            margin-bottom: 8px;
-        }
-        .form-group textarea {
-            min-height: 100px;
-        }
-        .payment-methods label {
-            display: block;
-            margin-bottom: 10px;
-            cursor: pointer;
-        }
-        .payment-methods input[type="radio"] {
-            margin-right: 10px;
-        }
-    </style>
-</head>
-<body>
-    <?php include __DIR__ . '/includes/header.php'; ?>
 
     <main class="container">
         <h1>Checkout Pesanan Anda</h1>
@@ -253,6 +184,7 @@ include __DIR__ . '/includes/header.php';
         </div>
     </main>
 
-    <?php include __DIR__ . '/includes/footer.php'; ?>
-</body>
-</html>
+<?php
+// Sertakan footer tampilan (ini akan berisi </body> dan </html> penutup)
+include __DIR__ . '/includes/footer.php';
+?>
