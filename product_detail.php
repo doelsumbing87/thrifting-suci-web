@@ -127,8 +127,4 @@ include __DIR__ . '/includes/header.php';
 <?php
 // Sertakan footer tampilan (ini akan berisi </body> dan </html> penutup)
 include __DIR__ . '/includes/footer.php';
-<<<<<<< HEAD
 ?>
-=======
-?>
->>>>>>> 80e41601e95216a9f3a88498772bc1c8787d7d61
