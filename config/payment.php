@@ -24,8 +24,4 @@ return [
         ]
     ],
     'cod_info' => 'Pembayaran dilakukan secara tunai saat barang diterima.'
-<<<<<<< HEAD
 ];
-=======
-];
->>>>>>> 80e41601e95216a9f3a88498772bc1c8787d7d61
