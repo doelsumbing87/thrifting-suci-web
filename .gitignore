@@ -1,0 +1,17 @@
+# .gitignore
+# Direktori vendor (untuk Composer packages)
+/vendor/
+
+# File konfigurasi sensitif
+/config/mail.php
+.env
+
+# File temporary PHP
+*.tmp
+*.log
+
+# File khusus sistem operasi
+.DS_Store
+Thumbs.db
+
+# Gambar placeholder jika tidak ingin di-push atau hanya ada di lokal
