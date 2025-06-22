@@ -7,6 +7,9 @@ $pdo = getDbConnection();
 $message = '';
 $message_type = '';
 
+// Load konfigurasi pembayaran
+$payment_config = require_once __DIR__ . '/config/payment.php';
+
 // Redirect jika belum login
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php?redirect=my_orders.php');
@@ -54,95 +57,6 @@ try {
 include __DIR__ . '/includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riwayat Pesanan - TOKO THRIFTING SUCI</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-    <style>
-        /* CSS Tambahan untuk My Orders */
-        .order-card {
-            background-color: #fff;
-            padding: 25px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border: 1px solid #e0e0e0;
-        }
-        .order-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px dashed #ddd;
-        }
-        .order-header h3 {
-            margin: 0;
-            font-size: 1.4rem;
-            color: #333;
-        }
-        .order-status {
-            font-weight: bold;
-            color: #007bff; /* Default */
-        }
-        .order-status.pending { color: #ffc107; }
-        .order-status.processing { color: #17a2b8; }
-        .order-status.shipped { color: #007bff; }
-        .order-status.delivered { color: #28a745; }
-        .order-status.cancelled { color: #dc3545; }
-
-        .order-item-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .order-item-list li {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px dotted #eee;
-        }
-        .order-item-list li:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        .order-item-list img {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 4px;
-            margin-right: 15px;
-        }
-        .order-item-details {
-            flex-grow: 1;
-        }
-        .order-item-details strong {
-            display: block;
-            font-size: 1.1rem;
-            color: #333;
-        }
-        .order-item-details span {
-            color: #666;
-            font-size: 0.9rem;
-        }
-        .order-total-amount {
-            text-align: right;
-            font-weight: bold;
-            font-size: 1.2rem;
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 1px solid #ddd;
-        }
-    </style>
-</head>
-<body>
-    <?php include __DIR__ . '/includes/header.php'; ?>
-
     <main class="container">
         <h1>Riwayat Pesanan Saya</h1>
 
@@ -166,19 +80,49 @@ include __DIR__ . '/includes/header.php';
                     <p>Metode Pembayaran: <?php echo htmlspecialchars($order['payment_method']); ?></p>
                     <p>Status Pembayaran: <?php echo ucfirst(htmlspecialchars($order['payment_status'])); ?></p>
 
+                    <?php
+                    // Tampilkan detail bank jika metode pembayaran adalah transfer bank dan statusnya unpaid/pending
+                    if (strpos($order['payment_method'], 'Transfer Bank -') === 0 && $order['payment_status'] === 'unpaid') {
+                        $bank_code = strtolower(str_replace('Transfer Bank - ', '', $order['payment_method'])); // misal: "bca"
+                        $bank_detail = $payment_config['bank_transfers'][$bank_code] ?? null;
+
+                        if ($bank_detail) {
+                            echo '<div style="background-color: #e9f7ef; padding: 15px; border-left: 5px solid #28a745; margin-top: 15px; border-radius: 4px;">';
+                            echo '<h4>Instruksi Pembayaran:</h4>';
+                            echo '<p>Mohon transfer sejumlah **Rp ' . number_format($order['total_amount'], 0, ',', '.') . '** ke rekening berikut:</p>';
+                            echo '<p><strong>Bank:</strong> ' . htmlspecialchars($bank_detail['name']) . '</p>';
+                            echo '<p><strong>Nomor Rekening:</strong> ' . htmlspecialchars($bank_detail['account_number']) . '</p>';
+                            echo '<p><strong>Atas Nama:</strong> ' . htmlspecialchars($bank_detail['account_name']) . '</p>';
+                            echo '<p><strong>Cabang:</strong> ' . htmlspecialchars($bank_detail['branch']) . '</p>';
+                            echo '<p>Setelah melakukan transfer, pesanan Anda akan segera diproses. Jangan lupa konfirmasi pembayaran Anda kepada admin.</p>';
+                            echo '</div>';
+                        }
+                    } elseif ($order['payment_method'] === 'COD' && $order['payment_status'] === 'unpaid') {
+                        echo '<div style="background-color: #e9f7ef; padding: 15px; border-left: 5px solid #28a745; margin-top: 15px; border-radius: 4px;">';
+                        echo '<h4>Instruksi Pembayaran:</h4>';
+                        echo '<p>' . htmlspecialchars($payment_config['cod_info']) . '</p>';
+                        echo '<p>Mohon siapkan uang tunai sejumlah **Rp ' . number_format($order['total_amount'], 0, ',', '.') . '** saat kurir mengantarkan pesanan Anda.</p>';
+                        echo '</div>';
+                    }
+                    ?>
+
                     <h4>Detail Item:</h4>
                     <ul class="order-item-list">
-                        <?php foreach ($order['items'] as $item): ?>
-                            <li>
-                                <img src="assets/images/products/<?php echo htmlspecialchars($item['product_image'] ?: 'product_placeholder.jpg'); ?>" alt="<?php echo htmlspecialchars($item['product_name']); ?>">
-                                <div class="order-item-details">
-                                    <strong><?php echo htmlspecialchars($item['product_name']); ?></strong>
-                                    <span>Kuantitas: <?php echo htmlspecialchars($item['quantity']); ?> x Rp <?php echo number_format($item['price'], 0, ',', '.'); ?></span>
-                                    <br>
-                                    <span>Subtotal: Rp <?php echo number_format($item['price'] * $item['quantity'], 0, ',', '.'); ?></span>
-                                </div>
-                            </li>
-                        <?php endforeach; ?>
+                        <?php if (!empty($order['items'])): ?>
+                            <?php foreach ($order['items'] as $item): ?>
+                                <li>
+                                    <img src="assets/images/products/<?php echo htmlspecialchars($item['product_image'] ?: 'product_placeholder.jpg'); ?>" alt="<?php echo htmlspecialchars($item['product_name']); ?>">
+                                    <div class="order-item-details">
+                                        <strong><?php echo htmlspecialchars($item['product_name']); ?></strong>
+                                        <span>Kuantitas: <?php echo htmlspecialchars($item['quantity']); ?> x Rp <?php echo number_format($item['price'], 0, ',', '.'); ?></span>
+                                        <br>
+                                        <span>Subtotal: Rp <?php echo number_format($item['price'] * $item['quantity'], 0, ',', '.'); ?></span>
+                                    </div>
+                                </li>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <li>Tidak ada item untuk pesanan ini.</li>
+                        <?php endif; ?>
                     </ul>
                     <div class="order-total-amount">
                         Total Pesanan: Rp <?php echo number_format($order['total_amount'], 0, ',', '.'); ?>
@@ -191,6 +135,7 @@ include __DIR__ . '/includes/header.php';
         <?php endif; ?>
     </main>
 
-    <?php include __DIR__ . '/includes/footer.php'; ?>
-</body>
-</html>
+<?php
+// Sertakan footer tampilan (ini akan berisi </body> dan </html> penutup)
+include __DIR__ . '/includes/footer.php';
+?>

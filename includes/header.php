@@ -2,7 +2,19 @@
 // includes/header.php
 // Di sini Anda bisa menempatkan navigasi, logo, dll.
 // Untuk saat ini, kita biarkan sederhana.
+
+// Pastikan session sudah dimulai, biasanya dari functions.php yang di-require pertama
+// Jika belum, bisa ditambahkan di sini: session_start();
 ?>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo $page_title ?? 'TOKO THRIFTING SUCI'; ?></title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    </head>
+<body>
 <header>
     <nav>
         <div class="logo">
@@ -11,7 +23,7 @@
         <ul>
             <li><a href="products.php">Produk</a></li>
             <li><a href="cart.php">Keranjang</a></li>
-            <?php if (isset($_SESSION['user_id'])): // Contoh sederhana, nanti akan diatur di login ?>
+            <?php if (isset($_SESSION['user_id'])): ?>
                 <li><a href="my_orders.php">Pesanan Saya</a></li>
                 <li><a href="logout.php">Logout</a></li>
             <?php else: ?>

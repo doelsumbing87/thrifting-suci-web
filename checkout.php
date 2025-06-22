@@ -15,7 +15,7 @@ if (!isset($_SESSION['user_id'])) {
 
 // Redirect jika keranjang kosong
 if (empty($_SESSION['cart'])) {
-    header('Location: cart.php');
+    header('Location: cart.php?error=empty_cart_checkout');
     exit();
 }
 
@@ -29,7 +29,6 @@ try {
     $user_info = $stmt_user->fetch();
 
     if (!$user_info) {
-        // Ini seharusnya tidak terjadi jika user_id ada di sesi, tapi sebagai fallback
         session_destroy();
         header('Location: login.php?error=invalid_user');
         exit();
@@ -49,37 +48,34 @@ foreach ($_SESSION['cart'] as $product_id => $item) {
 // Proses checkout jika ada pengiriman POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'place_order') {
     $shipping_address = trim($_POST['shipping_address']);
-    $payment_method = trim($_POST['payment_method']); // Metode pembayaran sederhana
+    $payment_method = trim($_POST['payment_method']); // Ini akan berisi "Transfer Bank - BCA" atau "COD"
+    $phone_number = trim($_POST['phone']); 
 
-    if (empty($shipping_address) || empty($payment_method)) {
-        $message = 'Alamat pengiriman dan metode pembayaran harus diisi.';
+    if (empty($shipping_address) || empty($payment_method) || empty($phone_number)) {
+        $message = 'Alamat pengiriman, nomor telepon, dan metode pembayaran harus diisi.';
         $message_type = 'error';
     } else {
         try {
-            $pdo->beginTransaction(); // Mulai transaksi database
+            $pdo->beginTransaction(); 
 
-            // 1. Buat pesanan baru di tabel `orders`
             $stmt_order = $pdo->prepare("
                 INSERT INTO orders (user_id, total_amount, shipping_address, payment_method, status, payment_status)
                 VALUES (?, ?, ?, ?, 'pending', 'unpaid')
             ");
             $stmt_order->execute([$user_id, $subtotal, $shipping_address, $payment_method]);
-            $order_id = $pdo->lastInsertId(); // Dapatkan ID pesanan yang baru dibuat
+            $order_id = $pdo->lastInsertId(); 
 
-            // 2. Tambahkan item-item dari keranjang ke `order_items` dan kurangi stok produk
             foreach ($_SESSION['cart'] as $product_id => $item) {
-                // Pastikan stok tersedia (validasi ganda di sisi server)
-                $stmt_stock = $pdo->prepare("SELECT stock FROM products WHERE id = ? FOR UPDATE"); // Lock row
+                $stmt_stock = $pdo->prepare("SELECT stock FROM products WHERE id = ? FOR UPDATE"); 
                 $stmt_stock->execute([$product_id]);
                 $current_stock = $stmt_stock->fetchColumn();
 
                 if ($current_stock < $item['quantity']) {
-                    $pdo->rollBack(); // Batalkan transaksi
+                    $pdo->rollBack(); 
                     $message = 'Stok tidak mencukupi untuk produk: ' . htmlspecialchars($item['name']) . '. Sisa stok: ' . $current_stock;
                     $message_type = 'error';
-                    // Kosongkan keranjang untuk produk yang bermasalah atau keseluruhan
-                    unset($_SESSION['cart'][$product_id]); // Hapus produk bermasalah dari keranjang
-                    header('Location: cart.php?error=stock_issue'); // Redirect kembali ke keranjang
+                    unset($_SESSION['cart'][$product_id]); 
+                    header('Location: cart.php?error=stock_issue'); 
                     exit();
                 }
 
@@ -89,14 +85,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 ");
                 $stmt_item->execute([$order_id, $product_id, $item['quantity'], $item['price']]);
 
-                // Kurangi stok produk
                 $stmt_update_stock = $pdo->prepare("UPDATE products SET stock = stock - ?, updated_at = NOW() WHERE id = ?");
                 $stmt_update_stock->execute([$item['quantity'], $product_id]);
             }
 
-            $pdo->commit(); // Commit transaksi
+            $pdo->commit(); 
             
-            // Hapus keranjang setelah pesanan berhasil
             unset($_SESSION['cart']);
 
             $message = 'Pesanan Anda berhasil dibuat! Nomor Pesanan: #' . $order_id . '.';
@@ -105,8 +99,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             header('Location: my_orders.php?order_id=' . $order_id . '&status=success');
             exit();
 
-        } catch (PDOException $e) {
-            $pdo->rollBack(); // Rollback jika ada kesalahan
+        } catch (PDOException | Exception $e) { // Tangkap Exception juga jika ada di PHPMailer
+            $pdo->rollBack(); 
             $message = 'Terjadi kesalahan saat memproses pesanan: ' . $e->getMessage();
             $message_type = 'error';
         }
@@ -116,78 +110,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 include __DIR__ . '/includes/header.php';
 ?>
-
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout - TOKO THRIFTING SUCI</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-    <style>
-        /* CSS Tambahan untuk Checkout */
-        .checkout-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 30px;
-            margin-top: 30px;
-        }
-        .checkout-form-section, .checkout-summary-section {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            flex: 1;
-            min-width: 400px; /* Lebar minimal untuk responsivitas */
-        }
-        .checkout-summary-section {
-            border-left: 1px solid #eee;
-            padding-left: 30px;
-        }
-        .checkout-summary-section h2, .checkout-form-section h2 {
-            margin-top: 0;
-            margin-bottom: 25px;
-            font-size: 1.8rem;
-            color: #333;
-        }
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            padding-bottom: 5px;
-            border-bottom: 1px dashed #eee;
-        }
-        .summary-item:last-of-type {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-        .summary-total {
-            font-size: 1.3rem;
-            font-weight: bold;
-            margin-top: 20px;
-            padding-top: 10px;
-            border-top: 2px solid #ddd;
-            display: flex;
-            justify-content: space-between;
-        }
-        .form-group label {
-            margin-bottom: 8px;
-        }
-        .form-group textarea {
-            min-height: 100px;
-        }
-        .payment-methods label {
-            display: block;
-            margin-bottom: 10px;
-            cursor: pointer;
-        }
-        .payment-methods input[type="radio"] {
-            margin-right: 10px;
-        }
-    </style>
-</head>
-<body>
-    <?php include __DIR__ . '/includes/header.php'; ?>
 
     <main class="container">
         <h1>Checkout Pesanan Anda</h1>
@@ -212,18 +134,32 @@ include __DIR__ . '/includes/header.php';
                     <div class="form-group">
                         <label for="phone">Nomor Telepon:</label>
                         <input type="text" id="phone" name="phone" value="<?php echo htmlspecialchars($user_info['phone'] ?? ''); ?>" required>
-                        </div>
+                    </div>
 
                     <div class="form-group">
                         <label>Metode Pembayaran:</label>
                         <div class="payment-methods">
                             <label>
-                                <input type="radio" name="payment_method" value="Transfer Bank" required checked> Transfer Bank
+                                <input type="radio" name="payment_method" value="COD" required checked> Cash On Delivery (COD)
                             </label>
                             <label>
-                                <input type="radio" name="payment_method" value="COD"> Cash On Delivery (COD)
+                                <input type="radio" name="payment_method" value="placeholder_bank_transfer" id="radio-transfer-bank"> Transfer Bank
                             </label>
+                            <div id="bank-options" style="margin-left: 20px;">
+                                <label>
+                                    <input type="radio" name="payment_method" value="Transfer Bank - BCA">
+                                    <img src="assets/images/payment_methods/bca.png" alt="Logo BCA"> BANK BCA
+                                </label>
+                                <label>
+                                    <input type="radio" name="payment_method" value="Transfer Bank - BRI">
+                                    <img src="assets/images/payment_methods/bri.png" alt="Logo BRI"> BANK BRI
+                                </label>
+                                <label>
+                                    <input type="radio" name="payment_method" value="Transfer Bank - BNI">
+                                    <img src="assets/images/payment_methods/bni.png" alt="Logo BNI"> BANK BNI
+                                </label>
                             </div>
+                        </div>
                     </div>
 
                     <button type="submit" class="button">Konfirmasi Pesanan</button>
@@ -253,6 +189,39 @@ include __DIR__ . '/includes/header.php';
         </div>
     </main>
 
-    <?php include __DIR__ . '/includes/footer.php'; ?>
-</body>
-</html>
+<?php
+include __DIR__ . '/includes/footer.php';
+?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
+    const radioTransferBank = document.getElementById('radio-transfer-bank');
+    const bankOptionsDiv = document.getElementById('bank-options');
+
+    function toggleBankOptions() {
+        // Cek apakah radio "Transfer Bank" itu sendiri yang dipilih, atau salah satu bank di dalamnya
+        const isTransferBankSelected = radioTransferBank.checked || 
+                                       document.querySelector('input[name="payment_method"][value^="Transfer Bank -"]:checked');
+        
+        if (isTransferBankSelected) {
+            bankOptionsDiv.style.display = 'block';
+            // Pastikan salah satu bank spesifik terpilih jika "Transfer Bank" dipilih
+            if (radioTransferBank.checked && !document.querySelector('input[name="payment_method"][value^="Transfer Bank -"]:checked')) {
+                // Pilih bank pertama secara default jika 'Transfer Bank' generik dipilih
+                bankOptionsDiv.querySelector('input[type="radio"]').checked = true;
+            }
+        } else {
+            bankOptionsDiv.style.display = 'none';
+        }
+    }
+
+    // Set initial state
+    toggleBankOptions();
+
+    // Add event listeners for changes
+    paymentMethods.forEach(radio => {
+        radio.addEventListener('change', toggleBankOptions);
+    });
+});
+</script>
