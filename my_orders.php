@@ -54,6 +54,7 @@ try {
     $orders = [];
 }
 
+// Sertakan header tampilan (ini sudah berisi <html>, <head>, dan <body> pembuka)
 include __DIR__ . '/includes/header.php';
 ?>
 

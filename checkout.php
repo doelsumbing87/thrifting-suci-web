@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             header('Location: my_orders.php?order_id=' . $order_id . '&status=success');
             exit();
 
-        } catch (PDOException | Exception $e) { // Tangkap Exception juga jika ada di PHPMailer
+        } catch (PDOException | Exception $e) { 
             $pdo->rollBack(); 
             $message = 'Terjadi kesalahan saat memproses pesanan: ' . $e->getMessage();
             $message_type = 'error';
@@ -148,15 +148,15 @@ include __DIR__ . '/includes/header.php';
                             <div id="bank-options" style="margin-left: 20px;">
                                 <label>
                                     <input type="radio" name="payment_method" value="Transfer Bank - BCA">
-                                    <img src="assets/images/payment_methods/bca.png" alt="Logo BCA"> BANK BCA
+                                    <img src="assets/images/payment_methods/bca.png" alt="Logo BCA"> BCA
                                 </label>
                                 <label>
                                     <input type="radio" name="payment_method" value="Transfer Bank - BRI">
-                                    <img src="assets/images/payment_methods/bri.png" alt="Logo BRI"> BANK BRI
+                                    <img src="assets/images/payment_methods/bri.png" alt="Logo BRI"> BRI
                                 </label>
                                 <label>
                                     <input type="radio" name="payment_method" value="Transfer Bank - BNI">
-                                    <img src="assets/images/payment_methods/bni.png" alt="Logo BNI"> BANK BNI
+                                    <img src="assets/images/payment_methods/bni.png" alt="Logo BNI"> BNI
                                 </label>
                             </div>
                         </div>
@@ -192,36 +192,3 @@ include __DIR__ . '/includes/header.php';
 <?php
 include __DIR__ . '/includes/footer.php';
 ?>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
-    const radioTransferBank = document.getElementById('radio-transfer-bank');
-    const bankOptionsDiv = document.getElementById('bank-options');
-
-    function toggleBankOptions() {
-        // Cek apakah radio "Transfer Bank" itu sendiri yang dipilih, atau salah satu bank di dalamnya
-        const isTransferBankSelected = radioTransferBank.checked || 
-                                       document.querySelector('input[name="payment_method"][value^="Transfer Bank -"]:checked');
-        
-        if (isTransferBankSelected) {
-            bankOptionsDiv.style.display = 'block';
-            // Pastikan salah satu bank spesifik terpilih jika "Transfer Bank" dipilih
-            if (radioTransferBank.checked && !document.querySelector('input[name="payment_method"][value^="Transfer Bank -"]:checked')) {
-                // Pilih bank pertama secara default jika 'Transfer Bank' generik dipilih
-                bankOptionsDiv.querySelector('input[type="radio"]').checked = true;
-            }
-        } else {
-            bankOptionsDiv.style.display = 'none';
-        }
-    }
-
-    // Set initial state
-    toggleBankOptions();
-
-    // Add event listeners for changes
-    paymentMethods.forEach(radio => {
-        radio.addEventListener('change', toggleBankOptions);
-    });
-});
-</script>
