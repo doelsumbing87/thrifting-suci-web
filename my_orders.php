@@ -7,6 +7,9 @@ $pdo = getDbConnection();
 $message = '';
 $message_type = '';
 
+// Load konfigurasi pembayaran
+$payment_config = require_once __DIR__ . '/config/payment.php';
+
 // Redirect jika belum login
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php?redirect=my_orders.php');
@@ -51,7 +54,6 @@ try {
     $orders = [];
 }
 
-// Sertakan header tampilan (ini sudah berisi <html>, <head>, dan <body> pembuka)
 include __DIR__ . '/includes/header.php';
 ?>
 
@@ -77,6 +79,32 @@ include __DIR__ . '/includes/header.php';
                     <p>Alamat Pengiriman: <?php echo nl2br(htmlspecialchars($order['shipping_address'])); ?></p>
                     <p>Metode Pembayaran: <?php echo htmlspecialchars($order['payment_method']); ?></p>
                     <p>Status Pembayaran: <?php echo ucfirst(htmlspecialchars($order['payment_status'])); ?></p>
+
+                    <?php
+                    // Tampilkan detail bank jika metode pembayaran adalah transfer bank dan statusnya unpaid/pending
+                    if (strpos($order['payment_method'], 'Transfer Bank -') === 0 && $order['payment_status'] === 'unpaid') {
+                        $bank_code = strtolower(str_replace('Transfer Bank - ', '', $order['payment_method'])); // misal: "bca"
+                        $bank_detail = $payment_config['bank_transfers'][$bank_code] ?? null;
+
+                        if ($bank_detail) {
+                            echo '<div style="background-color: #e9f7ef; padding: 15px; border-left: 5px solid #28a745; margin-top: 15px; border-radius: 4px;">';
+                            echo '<h4>Instruksi Pembayaran:</h4>';
+                            echo '<p>Mohon transfer sejumlah **Rp ' . number_format($order['total_amount'], 0, ',', '.') . '** ke rekening berikut:</p>';
+                            echo '<p><strong>Bank:</strong> ' . htmlspecialchars($bank_detail['name']) . '</p>';
+                            echo '<p><strong>Nomor Rekening:</strong> ' . htmlspecialchars($bank_detail['account_number']) . '</p>';
+                            echo '<p><strong>Atas Nama:</strong> ' . htmlspecialchars($bank_detail['account_name']) . '</p>';
+                            echo '<p><strong>Cabang:</strong> ' . htmlspecialchars($bank_detail['branch']) . '</p>';
+                            echo '<p>Setelah melakukan transfer, pesanan Anda akan segera diproses. Jangan lupa konfirmasi pembayaran Anda kepada admin.</p>';
+                            echo '</div>';
+                        }
+                    } elseif ($order['payment_method'] === 'COD' && $order['payment_status'] === 'unpaid') {
+                        echo '<div style="background-color: #e9f7ef; padding: 15px; border-left: 5px solid #28a745; margin-top: 15px; border-radius: 4px;">';
+                        echo '<h4>Instruksi Pembayaran:</h4>';
+                        echo '<p>' . htmlspecialchars($payment_config['cod_info']) . '</p>';
+                        echo '<p>Mohon siapkan uang tunai sejumlah **Rp ' . number_format($order['total_amount'], 0, ',', '.') . '** saat kurir mengantarkan pesanan Anda.</p>';
+                        echo '</div>';
+                    }
+                    ?>
 
                     <h4>Detail Item:</h4>
                     <ul class="order-item-list">
