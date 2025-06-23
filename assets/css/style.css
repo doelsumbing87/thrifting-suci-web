@@ -32,7 +32,7 @@ header {
     z-index: 1000;
 }
 
-header .main-nav { /* Menggunakan class baru */
+header .main-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -42,12 +42,12 @@ header .main-nav { /* Menggunakan class baru */
 header .logo a {
     color: #fff;
     text-decoration: none;
-    font-size: 2.2rem; /* Diperbesar */
+    font-size: 2.2rem;
     font-weight: bold;
-    letter-spacing: 1px; /* Sedikit spasi antar huruf */
+    letter-spacing: 1px;
 }
 
-header .nav-links { /* Menggunakan class baru */
+header .nav-links {
     list-style: none;
     margin: 0;
     padding: 0;
@@ -55,34 +55,34 @@ header .nav-links { /* Menggunakan class baru */
 }
 
 header .nav-links li {
-    margin-left: 25px; /* Sesuaikan jarak antar item */
+    margin-left: 25px;
 }
 
 header .nav-links li a {
     color: #fff;
     text-decoration: none;
-    padding: 8px 12px; /* Diperbesar */
+    padding: 8px 12px;
     transition: background-color 0.3s ease, transform 0.2s ease;
     border-radius: 4px;
-    display: flex; /* Untuk menata ikon dan teks */
+    display: flex;
     align-items: center;
-    font-size: 1.1rem; /* Diperbesar */
+    font-size: 1.1rem;
 }
 
 header .nav-links li a:hover {
     background-color: #555;
-    transform: translateY(-2px); /* Animasi hover sederhana */
+    transform: translateY(-2px);
 }
 
-header .nav-links li a i { /* Gaya untuk ikon di navigasi */
+header .nav-links li a i {
     margin-right: 8px;
     font-size: 1rem;
-    color: #a0a0a0; /* Warna ikon yang sedikit berbeda */
+    color: #a0a0a0;
     transition: color 0.3s ease;
 }
 
 header .nav-links li a:hover i {
-    color: #fff; /* Warna ikon berubah saat hover */
+    color: #fff;
 }
 
 /* Hamburger Menu Icon */
@@ -93,7 +93,7 @@ header .nav-links li a:hover i {
     width: 30px;
     height: 20px;
     cursor: pointer;
-    z-index: 1001; /* Pastikan di atas menu nav */
+    z-index: 1001;
     transition: all 0.3s ease;
 }
 
@@ -128,12 +128,12 @@ header .nav-links li a:hover i {
     text-align: center;
     padding: 80px 20px;
     margin-bottom: 30px;
-    position: relative; /* Penting untuk pseudo-element */
-    overflow: hidden; /* Pastikan overlay tidak keluar */
-    display: flex; /* Untuk memposisikan konten di tengah vertikal */
+    position: relative;
+    overflow: hidden;
+    display: flex;
     flex-direction: column;
     justify-content: center;
-    min-height: 450px; /* Tinggi minimum untuk section hero */
+    min-height: 450px;
 }
 
 .hero::before { /* Overlay gelap untuk keterbacaan teks */
@@ -143,14 +143,14 @@ header .nav-links li a:hover i {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.4); /* Warna hitam semi-transparan */
-    z-index: 1; /* Pastikan di bawah teks, di atas gambar */
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 1;
 }
 
 .hero h1, .hero p, .hero .button {
-    position: relative; /* Pastikan teks dan tombol di atas overlay */
+    position: relative;
     z-index: 2;
-    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7); /* Bayangan teks yang lebih kuat */
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
 }
 
 .hero h1 {
@@ -1041,4 +1041,42 @@ body.admin-body { /* Add this class to <body> tag in header.php for admin */
     .order-item-list img {
         margin-bottom: 10px;
     }
+}
+
+@media (max-width: 768px) {
+    header nav { /* This targets .main-nav indirectly if header nav is the structure */
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    header nav ul { /* This targets .nav-links indirectly */
+        flex-direction: column;
+        width: 100%;
+        margin-top: 15px;
+    }
+    header nav ul li {
+        margin: 5px 0;
+        width: 100%;
+    }
+    header nav ul li a {
+        text-align: center;
+    }
+}
+
+/* ========================================= */
+/* 16. Payment Method Logos                */
+/* ========================================= */
+.payment-methods label img {
+    height: 36px; /* Tinggi tetap sesuai yang Anda inginkan */
+    width: auto; /* Lebar akan menyesuaikan tinggi secara proporsional */
+    max-width: 60px; /* **Batasi lebar maksimum** agar tidak terlalu besar, bisa disesuaikan */
+    vertical-align: middle; /* Sejajarkan dengan teks */
+    margin-right: 8px; /* Jarak antara logo dan teks */
+    border-radius: 3px; /* Sedikit rounded corner pada logo */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* Sedikit bayangan untuk efek profesional */
+    object-fit: contain; /* Penting: Memastikan seluruh gambar terlihat dalam bingkai tanpa terpotong */
+}
+
+/* Pastikan radio button tetap sejajar */
+.payment-methods label input[type="radio"] {
+    margin-top: -2px; /* Sesuaikan posisi vertikal radio button */
 }
